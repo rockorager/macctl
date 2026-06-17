@@ -21,10 +21,10 @@ Instead of writing plist XML or making a one-off LaunchAgent just to set
 `EDITOR` or `PATH`, you can do this:
 
 ```sh
-macctl enable worker.service
-macctl start worker
-macctl daemon-reload
-macctl set-environment EDITOR=nvim
+macctl --user enable worker.service
+macctl --user start worker
+macctl --user daemon-reload
+macctl --user set-environment EDITOR=nvim
 ```
 
 ## Install
@@ -50,23 +50,23 @@ go install go.rockorager.dev/macctl/cmd/macctl@latest
 ```
 
 `macctl` is a single binary. It does not install a resident daemon. When you use
-user environment files, `macctl daemon-reload` installs a small LaunchAgent so
+user environment files, `macctl --user daemon-reload` installs a small LaunchAgent so
 your environment is applied again at login.
 
 ## Usage
 
 ### Scopes
 
-User services are the default:
+Like `systemctl`, `macctl` targets the system scope by default:
+
+```sh
+sudo macctl start worker
+```
+
+Use `--user` for the current user's launchd domain:
 
 ```sh
 macctl --user start worker
-```
-
-System services use the system launchd domain and require privileges:
-
-```sh
-sudo macctl --system start worker
 ```
 
 ### Commands
@@ -77,6 +77,7 @@ macctl stop UNIT
 macctl restart UNIT
 macctl enable UNIT_OR_PATH
 macctl disable UNIT
+macctl list-unit-files
 macctl daemon-reload
 macctl set-environment NAME=VALUE
 macctl unset-environment NAME
@@ -105,19 +106,27 @@ RestartSec=5
 Start it once without enabling it at login:
 
 ```sh
-macctl start worker.service
+macctl --user start worker.service
 ```
 
 Enable it at login:
 
 ```sh
-macctl enable worker.service
+macctl --user enable worker.service
 ```
 
-Restart or inspect it:
+Restart or stop it:
 
 ```sh
-macctl restart worker
+macctl --user restart worker
+macctl --user stop worker
+```
+
+
+List configured unit files and whether `macctl` has generated an enabled plist for them:
+
+```sh
+macctl --user list-unit-files
 ```
 
 `macctl` writes a generated LaunchAgent:
@@ -151,13 +160,13 @@ ExecStart=/Users/tim/bin/backup
 Start it once without enabling it at login:
 
 ```sh
-macctl start backup.timer
+macctl --user start backup.timer
 ```
 
 Enable it at login:
 
 ```sh
-macctl enable backup.timer
+macctl --user enable backup.timer
 ```
 
 Common timer forms:
@@ -194,7 +203,7 @@ PATH=${GOBIN}:$PATH
 Apply them:
 
 ```sh
-macctl daemon-reload
+macctl --user daemon-reload
 ```
 
 Check a value:
@@ -206,9 +215,9 @@ launchctl getenv ROCKORAGER
 Set or import values imperatively:
 
 ```sh
-macctl set-environment EDITOR=nvim
-macctl import-environment SSH_AUTH_SOCK
-macctl show-environment
+macctl --user set-environment EDITOR=nvim
+macctl --user import-environment SSH_AUTH_SOCK
+macctl --user show-environment
 ```
 
 ### Paths

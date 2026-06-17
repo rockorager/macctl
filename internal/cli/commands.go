@@ -13,10 +13,8 @@ import (
 	unitd "go.rockorager.dev/macctl/internal/unit"
 )
 
-func scope(opts *options) launchd.Scope { return launchd.Scope(opts.scope) }
-
 func startCommand(opts *options) *cobra.Command {
-	return &cobra.Command{Use: "start UNIT...", RunE: func(cmd *cobra.Command, args []string) error {
+	return &cobra.Command{Use: "start UNIT...", ValidArgsFunction: completeStartUnits(opts), RunE: func(cmd *cobra.Command, args []string) error {
 		if err := requireArgs("start", args); err != nil {
 			return err
 		}
@@ -45,7 +43,7 @@ func startCommand(opts *options) *cobra.Command {
 }
 
 func stopCommand(opts *options) *cobra.Command {
-	return &cobra.Command{Use: "stop UNIT...", RunE: func(cmd *cobra.Command, args []string) error {
+	return &cobra.Command{Use: "stop UNIT...", ValidArgsFunction: completeGeneratedUnits(opts), RunE: func(cmd *cobra.Command, args []string) error {
 		if err := requireArgs("stop", args); err != nil {
 			return err
 		}
@@ -65,7 +63,7 @@ func stopCommand(opts *options) *cobra.Command {
 }
 
 func restartCommand(opts *options) *cobra.Command {
-	return &cobra.Command{Use: "restart UNIT...", RunE: func(cmd *cobra.Command, args []string) error {
+	return &cobra.Command{Use: "restart UNIT...", ValidArgsFunction: completeGeneratedUnits(opts), RunE: func(cmd *cobra.Command, args []string) error {
 		if err := requireArgs("restart", args); err != nil {
 			return err
 		}
@@ -85,7 +83,7 @@ func restartCommand(opts *options) *cobra.Command {
 }
 
 func enableCommand(opts *options) *cobra.Command {
-	return &cobra.Command{Use: "enable UNIT...", RunE: func(cmd *cobra.Command, args []string) error {
+	return &cobra.Command{Use: "enable UNIT...", ValidArgsFunction: completeConfigUnits(opts), RunE: func(cmd *cobra.Command, args []string) error {
 		if err := requireArgs("enable", args); err != nil {
 			return err
 		}
@@ -99,7 +97,7 @@ func enableCommand(opts *options) *cobra.Command {
 }
 
 func disableCommand(opts *options) *cobra.Command {
-	return &cobra.Command{Use: "disable UNIT...", RunE: func(cmd *cobra.Command, args []string) error {
+	return &cobra.Command{Use: "disable UNIT...", ValidArgsFunction: completeEnabledUnits(opts), RunE: func(cmd *cobra.Command, args []string) error {
 		if err := requireArgs("disable", args); err != nil {
 			return err
 		}
@@ -113,6 +111,20 @@ func disableCommand(opts *options) *cobra.Command {
 			} else if out != "" {
 				fmt.Print(out)
 			}
+		}
+		return nil
+	}}
+}
+
+func listUnitFilesCommand(opts *options) *cobra.Command {
+	return &cobra.Command{Use: "list-unit-files", RunE: func(cmd *cobra.Command, args []string) error {
+		files, err := unitd.UnitFiles(scope(opts))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%-32s %s\n", "UNIT FILE", "STATE")
+		for _, file := range files {
+			fmt.Printf("%-32s %s\n", file.Name, file.State)
 		}
 		return nil
 	}}

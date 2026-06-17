@@ -39,3 +39,16 @@ func WritePlist(path string, job Job) error {
 	enc.Indent("\t")
 	return enc.Encode(job)
 }
+
+func ReadPlist(path string) (Job, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return Job{}, err
+	}
+	defer func() { _ = f.Close() }()
+	var job Job
+	if err := plist.NewDecoder(f).Decode(&job); err != nil {
+		return Job{}, err
+	}
+	return job, nil
+}

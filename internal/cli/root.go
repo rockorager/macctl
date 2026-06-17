@@ -11,14 +11,14 @@ type options struct {
 }
 
 func NewRootCommand() *cobra.Command {
-	opts := &options{scope: "user"}
+	opts := &options{scope: "system"}
 	cmd := &cobra.Command{
 		Use:   "macctl",
 		Short: "systemctl-style launchd manager for macOS",
 		Long:  "macctl provides systemctl-style commands for macOS launchd services, timers, and environment.",
 	}
 
-	cmd.PersistentFlags().StringVar(&opts.scope, "scope", "user", "target launchd scope: user or system")
+	cmd.PersistentFlags().StringVar(&opts.scope, "scope", "system", "target launchd scope: user or system")
 	cmd.PersistentFlags().BoolFunc("user", "target the current user's launchd domain", func(string) error {
 		opts.scope = "user"
 		return nil
@@ -34,6 +34,7 @@ func NewRootCommand() *cobra.Command {
 		restartCommand(opts),
 		enableCommand(opts),
 		disableCommand(opts),
+		listUnitFilesCommand(opts),
 		daemonReloadCommand(opts),
 		setEnvironmentCommand(opts),
 		unsetEnvironmentCommand(opts),
