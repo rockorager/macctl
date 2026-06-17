@@ -64,3 +64,12 @@ func ServiceTarget(scope Scope, label string) (string, error) {
 	}
 	return domain + "/" + label, nil
 }
+
+func Loaded(scope Scope, label string) bool {
+	target, err := ServiceTarget(scope, label)
+	if err != nil {
+		return false
+	}
+	_, err = Run("print", target)
+	return err == nil
+}

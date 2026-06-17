@@ -288,26 +288,26 @@ func installJob(scope launchd.Scope, job launchd.Job) error {
 		return err
 	}
 	plistPath := filepath.Join(dir, job.Label+".plist")
-	if err := launchd.WritePlist(plistPath, job); err != nil {
+	changed, err := launchd.WritePlistIfChanged(plistPath, job)
+	if err != nil {
 		return err
+	}
+	if !changed && launchd.Loaded(scope, job.Label) {
+		return nil
 	}
 	domain, err := launchd.Domain(scope)
 	if err != nil {
 		return err
 	}
-	if out, err := launchd.Run("bootstrap", domain, plistPath); err != nil {
-		// Already-bootstrapped services need bootout before bootstrap. Keep this
-		// intentionally small until launchd state handling is nicer.
+	if changed && launchd.Loaded(scope, job.Label) {
 		target, targetErr := launchd.ServiceTarget(scope, job.Label)
 		if targetErr != nil {
 			return targetErr
 		}
 		_, _ = launchd.Run("bootout", target)
-		if out, err = launchd.Run("bootstrap", domain, plistPath); err != nil {
-			return err
-		} else if out != "" {
-			fmt.Print(out)
-		}
+	}
+	if out, err := launchd.Run("bootstrap", domain, plistPath); err != nil {
+		return err
 	} else if out != "" {
 		fmt.Print(out)
 	}

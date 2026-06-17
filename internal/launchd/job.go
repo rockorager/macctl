@@ -1,6 +1,7 @@
 package launchd
 
 import (
+	"bytes"
 	"os"
 
 	"howett.net/plist"
@@ -30,14 +31,36 @@ type Job struct {
 }
 
 func WritePlist(path string, job Job) error {
-	f, err := os.Create(path)
+	b, err := MarshalPlist(job)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = f.Close() }()
-	enc := plist.NewEncoder(f)
+	return os.WriteFile(path, b, 0o644)
+}
+
+func WritePlistIfChanged(path string, job Job) (bool, error) {
+	b, err := MarshalPlist(job)
+	if err != nil {
+		return false, err
+	}
+	existing, err := os.ReadFile(path)
+	if err == nil && bytes.Equal(existing, b) {
+		return false, nil
+	}
+	if err != nil && !os.IsNotExist(err) {
+		return false, err
+	}
+	return true, os.WriteFile(path, b, 0o644)
+}
+
+func MarshalPlist(job Job) ([]byte, error) {
+	var b bytes.Buffer
+	enc := plist.NewEncoder(&b)
 	enc.Indent("\t")
-	return enc.Encode(job)
+	if err := enc.Encode(job); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
 func ReadPlist(path string) (Job, error) {
