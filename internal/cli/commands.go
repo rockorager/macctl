@@ -84,26 +84,6 @@ func restartCommand(opts *options) *cobra.Command {
 	}}
 }
 
-func statusCommand(opts *options) *cobra.Command {
-	return &cobra.Command{Use: "status UNIT...", RunE: func(cmd *cobra.Command, args []string) error {
-		if err := requireArgs("status", args); err != nil {
-			return err
-		}
-		for _, name := range args {
-			target, err := launchd.ServiceTarget(scope(opts), label(name))
-			if err != nil {
-				return err
-			}
-			out, err := launchd.Run("print", target)
-			if err != nil {
-				return err
-			}
-			fmt.Print(out)
-		}
-		return nil
-	}}
-}
-
 func enableCommand(opts *options) *cobra.Command {
 	return &cobra.Command{Use: "enable UNIT...", RunE: func(cmd *cobra.Command, args []string) error {
 		if err := requireArgs("enable", args); err != nil {
@@ -134,21 +114,6 @@ func disableCommand(opts *options) *cobra.Command {
 				fmt.Print(out)
 			}
 		}
-		return nil
-	}}
-}
-
-func listUnitsCommand(opts *options) *cobra.Command {
-	return &cobra.Command{Use: "list-units", RunE: func(cmd *cobra.Command, args []string) error {
-		domain, err := launchd.Domain(scope(opts))
-		if err != nil {
-			return err
-		}
-		out, err := launchd.Run("print", domain)
-		if err != nil {
-			return err
-		}
-		fmt.Print(out)
 		return nil
 	}}
 }
@@ -320,7 +285,7 @@ func installJob(scope launchd.Scope, job launchd.Job) error {
 	}
 	if out, err := launchd.Run("bootstrap", domain, plistPath); err != nil {
 		// Already-bootstrapped services need bootout before bootstrap. Keep this
-		// intentionally small until status handling is nicer.
+		// intentionally small until launchd state handling is nicer.
 		target, targetErr := launchd.ServiceTarget(scope, job.Label)
 		if targetErr != nil {
 			return targetErr

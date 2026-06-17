@@ -23,7 +23,6 @@ Instead of writing plist XML or making a one-off LaunchAgent just to set
 ```sh
 macctl enable worker.service
 macctl start worker
-macctl status worker
 macctl daemon-reload
 macctl set-environment EDITOR=nvim
 ```
@@ -61,13 +60,13 @@ your environment is applied again at login.
 User services are the default:
 
 ```sh
-macctl --user status worker
+macctl --user start worker
 ```
 
 System services use the system launchd domain and require privileges:
 
 ```sh
-sudo macctl --system status worker
+sudo macctl --system start worker
 ```
 
 ### Commands
@@ -76,10 +75,8 @@ sudo macctl --system status worker
 macctl start UNIT
 macctl stop UNIT
 macctl restart UNIT
-macctl status UNIT
 macctl enable UNIT_OR_PATH
 macctl disable UNIT
-macctl list-units
 macctl daemon-reload
 macctl set-environment NAME=VALUE
 macctl unset-environment NAME
@@ -121,7 +118,6 @@ Restart or inspect it:
 
 ```sh
 macctl restart worker
-macctl status worker
 ```
 
 `macctl` writes a generated LaunchAgent:
