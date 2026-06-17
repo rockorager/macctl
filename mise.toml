@@ -1,0 +1,44 @@
+[tools]
+go = "1.26.4"
+gofumpt = "0.10.0"
+golangci-lint = "2.12.2"
+
+[tasks.build]
+description = "Build the macctl binary"
+run = "go build -o ./out/macctl ./cmd/macctl"
+
+[tasks.install]
+description = "Install macctl"
+depends = ["build"]
+run = [
+  "install -d ${DESTDIR}${BINDIR:-${PREFIX:-/usr/local}/bin}",
+  "install -m 0755 ./out/macctl ${DESTDIR}${BINDIR:-${PREFIX:-/usr/local}/bin}/macctl",
+]
+
+[tasks.test]
+description = "Run Go tests"
+run = "go test ./..."
+
+[tasks.lint]
+description = "Run golangci-lint"
+run = "golangci-lint run ./..."
+
+[tasks.format]
+description = "Format Go files"
+run = "gofumpt -w $(find . -name '*.go' -not -path './.git/*')"
+
+[tasks.fix]
+description = "Apply automatic lint fixes and format Go files"
+run = [
+  "golangci-lint run --fix ./... || true",
+  "gofumpt -w $(find . -name '*.go' -not -path './.git/*')",
+]
+
+[tasks.check]
+description = "Run formatting checks, lint, tests, and build"
+run = [
+  "gofumpt -d .",
+  "golangci-lint run ./...",
+  "go test ./...",
+  "go build -o ./out/macctl ./cmd/macctl",
+]
