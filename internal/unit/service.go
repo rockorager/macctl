@@ -20,6 +20,8 @@ type Service struct {
 	Environment      map[string]string
 	Restart          string
 	RestartSec       *int
+	StandardOutput   string
+	StandardError    string
 }
 
 func LoadService(path string) (*Service, error) {
@@ -80,6 +82,18 @@ func LoadServiceAs(path, unitName string) (*Service, error) {
 				return nil, fmt.Errorf("parse RestartSec: %w", err)
 			}
 			svc.RestartSec = &seconds
+		case "Service.StandardOutput":
+			path, err := standardPath(opt.Value, ctx)
+			if err != nil {
+				return nil, fmt.Errorf("parse StandardOutput: %w", err)
+			}
+			svc.StandardOutput = path
+		case "Service.StandardError":
+			path, err := standardPath(opt.Value, ctx)
+			if err != nil {
+				return nil, fmt.Errorf("parse StandardError: %w", err)
+			}
+			svc.StandardError = path
 		}
 	}
 	if execStart != "" {
@@ -101,6 +115,8 @@ func (s *Service) LaunchdJob() launchd.Job {
 		ProgramArguments:     s.ExecStart,
 		WorkingDirectory:     s.WorkingDirectory,
 		EnvironmentVariables: s.Environment,
+		StandardOutPath:      s.StandardOutput,
+		StandardErrorPath:    s.StandardError,
 	}
 	if s.Restart == "always" || s.Restart == "on-failure" {
 		job.KeepAlive = true
@@ -109,6 +125,26 @@ func (s *Service) LaunchdJob() launchd.Job {
 		job.ThrottleInterval = s.RestartSec
 	}
 	return job
+}
+
+func standardPath(value string, ctx systemdsyntax.Context) (string, error) {
+	switch {
+	case value == "null":
+		return "/dev/null", nil
+	case strings.HasPrefix(value, "file:"), strings.HasPrefix(value, "append:"):
+		_, path, _ := strings.Cut(value, ":")
+		return systemdsyntax.ExpandSpecifiers(path, ctx)
+	case value == "inherit":
+		return "", nil
+	case strings.HasPrefix(value, "truncate:"):
+		return "", fmt.Errorf("unsupported value %q: launchd has no truncate equivalent", value)
+	case value == "journal" || value == "kmsg" || value == "journal+console" || value == "kmsg+console":
+		return "", fmt.Errorf("unsupported value %q: macOS launchd has no journald equivalent", value)
+	case value == "tty" || value == "socket" || strings.HasPrefix(value, "fd:"):
+		return "", fmt.Errorf("unsupported value %q", value)
+	default:
+		return "", fmt.Errorf("unsupported value %q", value)
+	}
 }
 
 func splitEnvironment(value string) []string {

@@ -32,6 +32,7 @@ func NewRootCommand() *cobra.Command {
 		startCommand(opts),
 		stopCommand(opts),
 		restartCommand(opts),
+		statusCommand(opts),
 		enableCommand(opts),
 		disableCommand(opts),
 		listUnitFilesCommand(opts),
