@@ -198,7 +198,7 @@ func Apply(scope launchd.Scope, vars map[string]string) error {
 func LaunchdJob(executable string) launchd.Job {
 	return launchd.Job{
 		Label:            "dev.macctl.environment",
-		ProgramArguments: []string{executable, "daemon-reload"},
+		ProgramArguments: []string{executable, "--user", "daemon-reload"},
 		RunAtLoad:        true,
 	}
 }
